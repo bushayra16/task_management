@@ -22,6 +22,7 @@ class _AddNewTaskScreenState extends State<AddNewTaskScreen> {
  final TextEditingController _descriptionController = TextEditingController();
  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
  bool _addNewTaskInProgresss = false;
+ bool _shouldRefreshPreviousPage = false;
 
   @override
   Widget build(BuildContext context) {
@@ -29,28 +30,29 @@ class _AddNewTaskScreenState extends State<AddNewTaskScreen> {
         .of(context)
         .textTheme;
     return Scaffold(
-      appBar: const TMAppbar(),
-      body: BackgroundScreen(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(25),
-            child: Center(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 85,),
-                  Text('Add New Task', style: textTheme.displaySmall?.copyWith(
-                      fontWeight: FontWeight.w500),),
-                  const SizedBox(height: 12,),
-                  _buildNewTaskForm(),
-                  const SizedBox(height: 45,),
-
-                ],
+        appBar: const TMAppbar(),
+        body: BackgroundScreen(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(25),
+              child: Center(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 85,),
+                    Text('Add New Task', style: textTheme.displaySmall?.copyWith(
+                        fontWeight: FontWeight.w500),),
+                    const SizedBox(height: 12,),
+                    _buildNewTaskForm(),
+                    const SizedBox(height: 45,),
+      
+                  ],
+                ),
               ),
             ),
           ),
         ),
-      ),
+
     );
   }
 
@@ -124,6 +126,7 @@ class _AddNewTaskScreenState extends State<AddNewTaskScreen> {
     setState(() {
     });
     if(response.isSuccess){
+      _shouldRefreshPreviousPage;
      _clearTextFields();
      showSnackBarMessage(context, 'New Task Added');
     }

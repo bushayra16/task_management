@@ -20,7 +20,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
   final List<Widget> _screen = const [
     NewTaskScreen(),
     CompletedTaskScreen(),
-    CanceledTaskScreen(),
+    CancelTaskScreen(),
     ProgressTaskScreen(),
   ];
 

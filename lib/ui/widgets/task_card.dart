@@ -1,17 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:task_management/data/model/network_response.dart';
+import 'package:task_management/data/model/task_model.dart';
+import 'package:task_management/data/services/network_caller.dart';
+import 'package:task_management/ui/widgets/circular_indicator.dart';
+import 'package:task_management/ui/widgets/snack_bar_msg.dart';import '../../data/utils/urls.dart';
+
 
 import '../utils/app_colors.dart';
 
 class TaskCard extends StatefulWidget {
   const TaskCard({
-    super.key,
+    super.key, required this.taskModel,
+    required this.onRefreshList
   });
+   final TaskModel taskModel;
+   final VoidCallback onRefreshList;
 
   @override
   State<TaskCard> createState() => _TaskCardState();
 }
 
 class _TaskCardState extends State<TaskCard> {
+  String _selectedStatus = '';
+  bool _changeStatusInProgress = false;
+  bool _deleteTaskInProgress = false;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _selectedStatus = widget.taskModel.status!;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -24,9 +44,9 @@ class _TaskCardState extends State<TaskCard> {
           crossAxisAlignment: CrossAxisAlignment.start,
 
           children: [
-            Text('Title', style: Theme.of(context).textTheme.titleSmall?.copyWith(),),
-            const  Text('Description',),
-            const  Text('Date: 12/12/12',),
+            Text(widget.taskModel.title ?? '', style: Theme.of(context).textTheme.titleSmall?.copyWith(),),
+            Text(widget.taskModel.description ?? '',),
+            Text('Date: ${widget.taskModel.createdDate}',),
             const SizedBox(height: 8,),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -35,8 +55,17 @@ class _TaskCardState extends State<TaskCard> {
                 buildTaskStatusChip(),
                 Wrap(
                   children: [
-                    IconButton(onPressed: _onTapEditButton, icon: const Icon(Icons.edit)) ,
-                    IconButton(onPressed: _onTapDeleteButton, icon: const Icon(Icons.delete,color: Colors.red,))
+                    Visibility(
+                      visible: _changeStatusInProgress == false,
+                      replacement: const CenterCircularIndicator(),
+                      child: IconButton(
+                          onPressed: _onTapEditButton, icon: const Icon(Icons.edit)),
+                    )
+                    ,
+                    Visibility(
+                        visible: _deleteTaskInProgress == false,
+                        replacement: const CenterCircularIndicator(),
+                        child: IconButton(onPressed: _onTapDeleteButton, icon: const Icon(Icons.delete,color: Colors.red,)))
 
                   ],
                 )
@@ -53,7 +82,7 @@ class _TaskCardState extends State<TaskCard> {
 
   Widget buildTaskStatusChip() {
     return Chip(
-                label: const Text('New', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),),
+                label: Text(widget.taskModel.status!, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                     side: const BorderSide(color: AppColors.themeColor)
@@ -69,8 +98,13 @@ class _TaskCardState extends State<TaskCard> {
           mainAxisSize: MainAxisSize.min,
           children: ['New','Completed','Cancelled','Progress'].map((value){
             return ListTile(
-              onTap: (){},
+              onTap: (){
+                _changeStatus(value);
+                Navigator.pop(context);
+              },
               title: Text(value),
+              selected: _selectedStatus == value,
+              trailing: _selectedStatus == value ? const Icon(Icons.check) : null,
             );
           }).toList(),
         ),
@@ -84,5 +118,37 @@ class _TaskCardState extends State<TaskCard> {
       );
     });
   }
-  void _onTapDeleteButton(){}
+  Future<void> _changeStatus (String newStatus) async{
+    _changeStatusInProgress = true;
+    setState(() {
+
+    });
+    final NetworkResponse response = await NetworkCaller.getRequest
+      (url: Urls.changeTaskStatus(widget.taskModel.sId!, newStatus));
+    if(response.isSuccess){
+      widget.onRefreshList();
+    } else{
+      _changeStatusInProgress = false;
+      setState(() {
+
+      });
+      showSnackBarMessage(context, response.errorMessage, true);
+    }
+  }
+  void _onTapDeleteButton() async{
+    _deleteTaskInProgress = true;
+    setState(() {
+    });
+    final NetworkResponse response = await NetworkCaller.getRequest
+      (url: Urls.deleteTask(widget.taskModel.sId!));
+    if(response.isSuccess){
+      widget.onRefreshList();
+    } else{
+      _deleteTaskInProgress = false;
+      setState(() {
+
+      });
+      showSnackBarMessage(context, response.errorMessage, true);
+    }
+  }
   }
