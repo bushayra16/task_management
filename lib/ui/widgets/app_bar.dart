@@ -28,12 +28,12 @@ class TMAppbar extends StatelessWidget implements PreferredSizeWidget{
               children: [
                 const CircleAvatar(backgroundColor: Colors.white,),
                 const SizedBox(width: 15,),
-                 const Expanded(
+                  Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children:  [
-                      Text('Fatima Tuj Jahra', style: TextStyle(color: Colors.white, fontSize: 16),),
-                      Text('Mobile App Developer', style:TextStyle(color: Colors.white, fontSize: 12),)
+                      Text(AuthControllers.userData?.fullName ?? '', style: const TextStyle(color: Colors.white, fontSize: 16),),
+                      Text(AuthControllers.userData?.email ?? ' ', style: const TextStyle(color: Colors.white, fontSize: 12),)
                     ],
                   ),
                 ),

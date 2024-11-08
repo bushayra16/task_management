@@ -5,6 +5,7 @@ class UserModel {
   String? firstName;
   String? lastName;
   String? mobile;
+  String? photo;
   String? createdDate;
 
   UserModel(
@@ -13,6 +14,7 @@ class UserModel {
         this.firstName,
         this.lastName,
         this.mobile,
+        this.photo,
         this.createdDate});
 
   String get fullName => '${firstName ?? ''} ${lastName ?? ''}';
@@ -23,6 +25,7 @@ class UserModel {
     firstName = json['firstName'];
     lastName = json['lastName'];
     mobile = json['mobile'];
+    photo = json['photo'];
     createdDate = json['createdDate'];
   }
 
@@ -32,6 +35,7 @@ class UserModel {
     data['email'] = email;
     data['firstName'] = firstName;
     data['lastName'] = lastName;
+    data['photo'] = photo;
     data['mobile'] = mobile;
     data['createdDate'] = createdDate;
     return data;

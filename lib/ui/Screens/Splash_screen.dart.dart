@@ -25,10 +25,11 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future <void> _moveToNewScreen () async{
-  await Future.delayed(const Duration(seconds: 5));
+  await Future.delayed(const Duration(seconds: 2));
 
   await AuthControllers.getAccessToken();
   if(AuthControllers.isLoggedIn()){
+    await AuthControllers.getUserData();
   Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const BottomNavBar())
   );
     } else{
@@ -40,15 +41,16 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold (
         body: BackgroundScreen(
-           child: Center(
-             child: Column(
-                 mainAxisAlignment: MainAxisAlignment.center,
-                 children:
-               [ SvgPicture.asset(AssetsPath.logoSvg, width: 120,),])
-           )
-
-      ),
-    );
+         child:  Column(
+           mainAxisAlignment: MainAxisAlignment.center,
+           children:[
+              Center( child:
+                 SvgPicture.asset(
+                   AssetsPath.logoSvg,
+                   width: 120,)
+               
+               ),
+             ])));
   }
 }
 
