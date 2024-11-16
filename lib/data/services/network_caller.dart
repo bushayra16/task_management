@@ -74,7 +74,7 @@ class NetworkCaller {
         statusCode: response.statusCode,
         statusData: decodeData,
       );
-    } else if (response.statusCode == 400 || response.statusCode == 404) {
+    } else if (response.statusCode == 400 || response.statusCode == 404 || response.statusCode == 406) {
       final decodeData = jsonDecode(response.body);
       return NetworkResponse(
         isSuccess: false,

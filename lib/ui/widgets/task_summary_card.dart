@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:task_management/data/model/task_status_count.dart';
+import 'package:task_management/data/model/task_status_model.dart';
+import 'package:task_management/data/model/task_list_model.dart';
 
 class TaskSummaryCard extends StatelessWidget {
   const TaskSummaryCard({
-    super.key, required this.title, required this.count,
+    super.key, required this.taskCountModel,
   });
 
-  final String title;
-  final int count;
+  final TaskStatusModel taskCountModel;
 
   @override
   Widget build(BuildContext context) {
@@ -20,11 +22,12 @@ class TaskSummaryCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('$count', style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              Text(taskCountModel.sum.toString(),
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w600
               ),),
               const SizedBox(height: 4,),
-              Text(title, style: const TextStyle(color: Colors.grey),)
+              Text(taskCountModel.sId.toString(), style: const TextStyle(color: Colors.grey),)
             ],
           ),
         ),

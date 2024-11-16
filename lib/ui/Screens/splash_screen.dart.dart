@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
 import 'package:task_management/ui/Screens/main_bottom_nav_bar.dart';
 import 'package:task_management/ui/Screens/sign_in_screen.dart';
 import 'package:task_management/ui/controllers/auth_controllers.dart';
@@ -30,10 +31,9 @@ class _SplashScreenState extends State<SplashScreen> {
   await AuthControllers.getAccessToken();
   if(AuthControllers.isLoggedIn()){
     await AuthControllers.getUserData();
-  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const BottomNavBar())
-  );
+    Get.offAllNamed(BottomNavBar.name);
     } else{
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const SignInScreen()));
+    Get.offAllNamed(SignInScreen.name);
   }
   }
 
@@ -42,15 +42,16 @@ class _SplashScreenState extends State<SplashScreen> {
     return Scaffold (
         body: BackgroundScreen(
          child:  Column(
-           mainAxisAlignment: MainAxisAlignment.center,
-           children:[
-              Center( child:
-                 SvgPicture.asset(
-                   AssetsPath.logoSvg,
-                   width: 120,)
-               
-               ),
-             ])));
+             mainAxisAlignment: MainAxisAlignment.center,
+             children:[
+                Center( child:
+                   SvgPicture.asset(
+                     AssetsPath.logoSvg,
+                     width: 120,)
+
+                 ),
+               ]),
+         ));
   }
 }
 

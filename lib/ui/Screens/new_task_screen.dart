@@ -1,32 +1,34 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:task_management/data/model/count_dart.dart';
+import 'package:get/get.dart';
+import 'package:task_management/data/model/task_status_count.dart';
 import 'package:task_management/data/model/network_response.dart';
-import 'package:task_management/data/model/task_list_count.dart';
+import 'package:task_management/data/model/task_status_model.dart';
 import 'package:task_management/data/model/task_list_model.dart';
 import 'package:task_management/data/services/network_caller.dart';
 import 'package:task_management/data/utils/urls.dart';
 import 'package:task_management/ui/Screens/add_new_task_screen.dart';
+import 'package:task_management/ui/controllers/new_task_list_controller.dart';
+import 'package:task_management/ui/controllers/task_count_controller.dart';
 import 'package:task_management/ui/widgets/circular_indicator.dart';
 import 'package:task_management/ui/widgets/snack_bar_msg.dart';
 import 'package:task_management/data/model/task_model.dart';
-import '../widgets/task_card.dart';
+import '../widgets/task_update_card.dart';
 import '../widgets/task_summary_card.dart';
 
 class NewTaskScreen extends StatefulWidget {
   const NewTaskScreen({super.key});
-
+  static const String name = '/newTask';
   @override
   State<NewTaskScreen> createState() => _NewTaskScreenState();
 }
 
 class _NewTaskScreenState extends State<NewTaskScreen> {
-  bool _getNewTaskListInProgress = false;
-  bool _newTaskCountInProgress = false;
-  List<TaskModel> _newTaskList = [];
-  List<Count> _newTaskCount = [];
 
+  final NewTaskListController newTaskListController = Get.find<
+      NewTaskListController>();
+  final TaskCountController taskCountController = Get.find<
+      TaskCountController>();
 
   @override
   void initState() {
@@ -38,116 +40,92 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: [
-          buildTaskSummaryCard(),
-          Expanded(child: Visibility(
-            visible: !_getNewTaskListInProgress,
-            replacement: const CenterCircularIndicator(),
-            child: ListView.separated(
-              itemCount: _newTaskList.length,
-              itemBuilder: (context, index) {
-                return TaskCard(
-                  taskModel: _newTaskList[index],
-                  onRefreshList: _getNewTaskList,
-
-                );
-              },
-              separatorBuilder: (context, builder) {
-                return const SizedBox(height: 5,);
-              },
+        body: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(5),
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  _getNewTaskList();
+                  _getTaskStatusCount();
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: GetBuilder<TaskCountController>(
+                        builder: (controller) {
+                          return Row(
+                            children: controller.taskCountList
+                                .map(
+                                  (e) =>
+                                  TaskSummaryCard(
+                                      taskCountModel: e),)
+                                .toList(),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Expanded(
+                      child: GetBuilder<NewTaskListController>(
+                        builder: (controller) {
+                          return Visibility(
+                            visible: !controller.inProgress,
+                            replacement: const Center(
+                                child: CircularProgressIndicator()),
+                            child: ListView.separated(
+                              itemCount: controller.getNewTask.length,
+                              itemBuilder: (context, index) {
+                                return TaskCard(
+                                  taskModel: controller.getNewTask[index],
+                                  onRefreshList: _getNewTaskList,
+                                );
+                              },
+                              separatorBuilder: (context, index) {
+                                return const SizedBox(
+                                  height: 16,
+                                );
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
-          )
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _onTapButton,
-        child: const Icon(Icons.add),
-      ),
-    );
-  }
 
-  Widget buildTaskSummaryCard() {
-    return RefreshIndicator(
-      onRefresh: () async{
-        _getNewTaskList();
-        _getTaskStatusCount();
-      },
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: _getTaskSummaryCardList()
-              //   ..._newTaskCount.map((e){
-              //   return TaskSummaryCard(title: e.sId ?? '' , count: e.sum ?? 0);
-              // })
-
-            ,
-          ),
-        ),
-      ),
-    );
-  }
-
-  List<TaskSummaryCard> _getTaskSummaryCardList() {
-    List<TaskSummaryCard> taskSummaryCardList = [];
-    for (Count t in _newTaskCount) {
-      taskSummaryCardList.add(TaskSummaryCard(title: t.sId!, count: t.sum ?? 0));
-    }
-
-    return taskSummaryCardList;
+        floatingActionButton: FloatingActionButton(
+            onPressed: _onTapButton,
+            child: const Icon(Icons.add
+            )));
   }
 
   void _onTapButton() async {
     final bool? shouldRefresh = await
     Navigator.push(context,
         MaterialPageRoute(builder: (context) => const AddNewTaskScreen()));
-    if(shouldRefresh == true){
+    if (shouldRefresh == true) {
       _getNewTaskList();
+      _getTaskStatusCount();
     }
-    }
-
-  Future<void> _getNewTaskList() async{
-    _newTaskList.clear();
-    _getNewTaskListInProgress = true;
-    setState(() {
-    });
-    final NetworkResponse response = await NetworkCaller.getRequest(url: Urls.getNewTaskList);
-    if(response.isSuccess){
-      final TaskListModel taskListModel = TaskListModel.fromJson(response.statusData);
-      _newTaskList = taskListModel.taskList ?? [];
-    }else{
-      showSnackBarMessage(context, response.errorMessage, true);
-    }
-    _getNewTaskListInProgress = false;
-    setState(() {
-    });
   }
-  Future<void> _getTaskStatusCount() async{
-   _newTaskCount.clear();
-   _newTaskCountInProgress = true;
-   setState(() {
 
-   });
-   final NetworkResponse response = await NetworkCaller.getRequest(url: Urls.getTaskCount());
-   if(response.isSuccess){
-     final TaskListCountModel taskListCountModel = TaskListCountModel.fromJson(response.statusData);
-     _newTaskCount = taskListCountModel.countList ?? [];
-   } else{
-     showSnackBarMessage(context, response.errorMessage, true);
-   }
-   _newTaskCountInProgress = false;
-   setState(() {
+  Future<void> _getNewTaskList() async {
+    final bool result = await newTaskListController.getNewTaskList();
+    if (result == false) {
+      showSnackBarMessage(context, newTaskListController.errorMessage!, true);
+    }
+  }
 
-   });
+  Future<void> _getTaskStatusCount() async {
+    final bool result = await taskCountController.getTaskStatusCount();
+    if (result == false) {
+      showSnackBarMessage(context, newTaskListController.errorMessage!, true);
+    }
   }
 }
-
-
-
-
-
 

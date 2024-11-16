@@ -1,10 +1,12 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:task_management/data/utils/urls.dart';
 import 'package:task_management/ui/Screens/sign_in_screen.dart';
 import 'package:task_management/ui/controllers/auth_controllers.dart';
+import 'package:task_management/ui/controllers/profile_update_controller.dart';
 import 'package:task_management/ui/widgets/app_bar.dart';
 import 'package:task_management/ui/widgets/circular_indicator.dart';
 
@@ -15,7 +17,7 @@ import '../widgets/snack_bar_msg.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
-
+  static const String name = '/Profile';
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
@@ -27,7 +29,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController _passWordController = TextEditingController();
   final TextEditingController _mobileController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
+  final ProfileUpdateController _profileUpdateController = Get.find<ProfileUpdateController>();
 
   @override
   void initState() {
@@ -39,12 +41,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
      _emailController.text = AuthControllers.userData?.email ?? '' ;
      _firstNameController.text = AuthControllers.userData?.firstName ?? '' ;
      _lastNameController.text = AuthControllers.userData?.lastName ?? '' ;
-     _mobileController.text = AuthControllers.userData?.email ?? '' ;
-
+     _mobileController.text = AuthControllers.userData?.mobile ?? '' ;
   }
-
   XFile? insertedImage;
-  bool _updateProfileInProgress = false;
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +68,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
   Widget _buildProfileUpdateForm() {
-
     return Form(
       key: _formKey,
       child: Column(
@@ -83,6 +81,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             decoration: const InputDecoration(
               hintText: 'Email',
             ),
+            validator: (String? value){
+              if(value?.trim().isEmpty ?? true){
+                return ('Enter your email');
+              } else{
+                return null;
+              }
+            },
           ),
           const SizedBox(height: 8,),
           TextFormField(
@@ -91,6 +96,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             decoration: const InputDecoration(
               hintText: 'First Name',
             ),
+            validator: (String? value){
+              if(value?.trim().isEmpty ?? true){
+                return ('Enter your First Name');
+              } else{
+                return null;
+              }
+            },
           ),
           const SizedBox(height: 8,),
           TextFormField(
@@ -99,6 +111,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             decoration: const InputDecoration(
               hintText: 'Last Name',
             ),
+            validator: (String? value){
+              if(value?.trim().isEmpty ?? true){
+                return ('Enter your Last Name');
+              } else{
+                return null;
+              }
+            },
           ),
           const SizedBox(height: 8,),
           TextFormField(
@@ -107,6 +126,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             decoration: const InputDecoration(
                 hintText: 'Password'
             ),
+
           ),
           const SizedBox(height: 8,),
           TextFormField(
@@ -115,26 +135,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
             decoration: const InputDecoration(
               hintText: 'Mobile',
             ),
+            validator: (String? value){
+              if(value?.trim().isEmpty ?? true){
+                return ('Enter your Number');
+              } else{
+                return null;
+              }
+            },
           ),
+
           const SizedBox(height: 24,),
-          Visibility(
-            visible: _updateProfileInProgress == false,
-            replacement: const CenterCircularIndicator(),
-            child: ElevatedButton(
-              onPressed: () {
-                if (_formKey.currentState!.validate()) {
-                  _updateProfile();
-                }
-              },
-              child: const Icon(Icons.arrow_circle_right_outlined),
-            ),
+          GetBuilder<ProfileUpdateController>(
+            builder: (controller) {
+              return Visibility(
+                visible: !controller.inProgress,
+                replacement: const CenterCircularIndicator(),
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (!_formKey.currentState!.validate()) {
+                      return;
+                    }
+                    _updateProfile();
+                  },
+                  child: const Icon(Icons.arrow_circle_right_outlined),
+                ),
+              );
+            }
           ),
         ],
       ),
     );}
-  // void _onTapUpdateButton () {
-  //   Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=> const SignInScreen()), (value)=> false);
-  // }
   Widget _buildPhotoPicker(){
     return GestureDetector(
       onTap: _selectedImage,
@@ -157,7 +187,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: const Text('Photo', style: TextStyle(color: Colors.white,fontSize:18,fontWeight: FontWeight.bold),),
             ),
             const SizedBox(width: 20,),
-            Text(_getSelectedPhotoTitle(), style: TextStyle(color: Colors.grey),),
+            Text(_getSelectedPhotoTitle(), style: const TextStyle(color: Colors.grey),),
           ],
         ),
       ),
@@ -165,39 +195,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _updateProfile() async {
-    _updateProfileInProgress = true;
-    setState(() {});
-    Map<String, dynamic> requestBody = {
-      "email": _emailController.text.trim(),
-      "firstName": _firstNameController.text.trim(),
-      "lastName": _lastNameController.text.trim(),
-      "mobile": _mobileController.text.trim(),
-    };
-
-    if (_passWordController.text.isNotEmpty) {
-      requestBody['password'] = _passWordController.text;
-    }
-
-    if (insertedImage != null) {
-      List<int> imageBytes = await insertedImage!.readAsBytes();
-      String convertedImage = base64Encode(imageBytes);
-      requestBody['photo'] = convertedImage;
-    }
-
-    final NetworkResponse response = await NetworkCaller.postRequest(
-      url: Urls.profileUpdate,
-      body: requestBody,
-    );
-
-    _updateProfileInProgress = false;
-    setState(() {});
-
-    if (response.isSuccess) {
-      UserModel userModel = UserModel.fromJson(requestBody);
-      AuthControllers.saveUserData(userModel);
+    final bool result = await _profileUpdateController.updateProfile(_passWordController.text, _emailController.text.trim(), _firstNameController.text.trim(), _lastNameController.text.trim(), _mobileController.text.trim());
+    if (result) {
       showSnackBarMessage(context, 'Profile has been updated!');
+      Get.back(result: true);
     } else {
-      showSnackBarMessage(context, response.errorMessage);
+      showSnackBarMessage(context, _profileUpdateController.errorMessage!, true);
     }
   }
 
@@ -210,9 +213,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _selectedImage() async{
     ImagePicker imagePicker = ImagePicker();
-   XFile? pickedImage = await imagePicker.pickImage(source: ImageSource.camera);
+   XFile? pickedImage = await imagePicker.pickImage(source: ImageSource.gallery);
    if(pickedImage != null){
      insertedImage = pickedImage;
+     setState(() {
+     });
    }
 }
 }

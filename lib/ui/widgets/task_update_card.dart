@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:task_management/data/model/network_response.dart';
 import 'package:task_management/data/model/task_model.dart';
 import 'package:task_management/data/services/network_caller.dart';
+import 'package:task_management/ui/controllers/task_update_controller.dart';
 import 'package:task_management/ui/widgets/circular_indicator.dart';
 import 'package:task_management/ui/widgets/snack_bar_msg.dart';import '../../data/utils/urls.dart';
 
@@ -24,10 +26,10 @@ class _TaskCardState extends State<TaskCard> {
   String _selectedStatus = '';
   bool _changeStatusInProgress = false;
   bool _deleteTaskInProgress = false;
+  final TaskUpdateController _taskUpdateController = Get.find<TaskUpdateController>();
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     _selectedStatus = widget.taskModel.status!;
   }
@@ -82,7 +84,7 @@ class _TaskCardState extends State<TaskCard> {
 
   Widget buildTaskStatusChip() {
     return Chip(
-                label: Text(widget.taskModel.status!, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),),
+                label: Text(widget.taskModel.status!, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                     side: const BorderSide(color: AppColors.themeColor)
@@ -119,20 +121,11 @@ class _TaskCardState extends State<TaskCard> {
     });
   }
   Future<void> _changeStatus (String newStatus) async{
-    _changeStatusInProgress = true;
-    setState(() {
-
-    });
-    final NetworkResponse response = await NetworkCaller.getRequest
-      (url: Urls.changeTaskStatus(widget.taskModel.sId!, newStatus));
-    if(response.isSuccess){
+    final bool result = await _taskUpdateController.changeStatus(widget.taskModel.sId!, newStatus);
+    if(result){
       widget.onRefreshList();
     } else{
-      _changeStatusInProgress = false;
-      setState(() {
-
-      });
-      showSnackBarMessage(context, response.errorMessage, true);
+      showSnackBarMessage(context, _taskUpdateController.errorMessage!, true);
     }
   }
   void _onTapDeleteButton() async{

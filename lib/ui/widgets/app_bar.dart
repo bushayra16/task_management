@@ -1,6 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:task_management/ui/Screens/profile_screen.dart';
 import 'package:task_management/ui/Screens/sign_in_screen.dart';
+import 'package:task_management/ui/utils/assets_path.dart';
 
 import '../controllers/auth_controllers.dart';
 import '../utils/app_colors.dart';
@@ -19,14 +23,19 @@ class TMAppbar extends StatelessWidget implements PreferredSizeWidget{
         if (isProfileScreenOpen){
           return;
         }
-        Navigator.push(context, MaterialPageRoute(builder: (context)=> const ProfileScreen()));
+        Get.to(const ProfileScreen());
       },
       child: AppBar(
         backgroundColor: AppColors.themeColor,
         title: (
             Row(
               children: [
-                const CircleAvatar(backgroundColor: Colors.white,),
+                 CircleAvatar(backgroundColor: Colors.white,
+                   backgroundImage: (AuthControllers.userData?.photo != null && AuthControllers.userData!.photo!.isNotEmpty)
+                       ? MemoryImage(base64Decode(AuthControllers.userData!.photo!))
+                       : null, // Use a default image or leave null
+
+                ),
                 const SizedBox(width: 15,),
                   Expanded(
                   child: Column(

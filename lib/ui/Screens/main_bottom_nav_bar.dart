@@ -9,7 +9,7 @@ import '../widgets/app_bar.dart';
 
 class BottomNavBar extends StatefulWidget {
   const BottomNavBar({super.key});
-
+ static const String name = '/home';
   @override
   State<BottomNavBar> createState() => _BottomNavBarState();
 }
